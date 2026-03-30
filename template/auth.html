@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Connexion</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}" />
+    <script src="{{ url_for('static', filename='js/scriptLogin.js') }}" defer></script>
+</head>
+<body>
+    <header>
+        <h1>Netflix.Io</h1>
+        <p>Page de connexion/inscription</p>
+    </header>
+
+    <main>
+        <article>
+
+            <!-- LOGIN -->
+            <div id="loginfields">
+                <div class="card">
+                    <form id="formulaireLogin">
+                        <h2>Se connecter</h2>
+                        <label for="username">Nom d'utilisateur</label>
+                        <input type="text" id="username">
+                        <label for="password">Mot de passe</label>
+                        <input type="password" id="password">
+                        <button type="submit">Se connecter</button>
+                    </form>
+                    <button type="button" class="secondary" id="btnShowRegister">Pas de compte ? S'inscrire</button>
+                </div>
+            </div>
+
+            <!-- REGISTER -->
+            <div id="registerfields" style="display:none">
+                <div class="card">
+                    <form id="formulaireRegister">
+                        <h2>S'inscrire</h2>
+                        <label for="usernameRegister">Nom d'utilisateur</label>
+                        <input type="text" id="usernameRegister">
+                        <label for="passwordRegister">Mot de passe</label>
+                        <input type="password" id="passwordRegister">
+                        <button type="submit">S'inscrire</button>
+                    </form>
+                    <button type="button" class="secondary" id="btnShowLogin">Déjà un compte ? Se connecter</button>
+                </div>
+            </div>
+
+            <p id="error" style="color:red; text-align:center; display:none"></p>
+
+        </article>
+    </main>
+
+    <footer>
+        <p>Pierre 2002-2026</p>
+    </footer>
+</body>
+</html>
