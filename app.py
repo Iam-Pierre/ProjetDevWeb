@@ -1,10 +1,14 @@
 from flask import Flask, render_template, session, redirect
 from extensions import db, sess
 from models import User
-from routes import api
+from routes.auth import apiAuth
+from routes.series import apiSeries
+from routes.avis import apiAvis
+from routes.recommendation import apiRecommendation
 
 
-app = Flask(__name__, template_folder="template", static_folder="static")
+
+app = Flask(__name__)
 
 app.config["SECRET_KEY"] = "dev-secret"
 app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///app.db"
@@ -16,7 +20,10 @@ app.config["SESSION_SQLALCHEMY"] = db
 db.init_app(app)
 sess.init_app(app)
 
-app.register_blueprint(api)
+app.register_blueprint(apiAuth)
+app.register_blueprint(apiSeries)
+app.register_blueprint(apiAvis)
+app.register_blueprint(apiRecommendation)
 
 with app.app_context():
     db.create_all()

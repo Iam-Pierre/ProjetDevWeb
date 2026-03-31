@@ -3,13 +3,9 @@ from werkzeug.security import generate_password_hash, check_password_hash
 import pickle
 
 from extensions import db
-from models import User, ApiKey
+from models import User
 
-
-
-
-api = Blueprint("api", __name__)
-
+apiAuth = Blueprint("apiAuth", __name__)
 
 def login_required(f):
     """
@@ -46,12 +42,12 @@ def auth_required(f):
         if "user" in session:
             user = User.get_by_username(session["user"])
 
-        if user is None:
-            api_key_header = request.headers.get("X-API-Key")
-            if api_key_header is not None:
-                api_key = ApiKey.get_by_key(api_key_header)
-                if api_key is not None:
-                    user = api_key.user
+        # if user is None:
+        #     api_key_header = request.headers.get("X-API-Key")
+        #     if api_key_header is not None:
+        #         api_key = ApiKey.get_by_key(api_key_header)
+        #         if api_key is not None:
+        #             user = api_key.user
 
         if user is None:
             return {"error": "non autorisé"}, 401
@@ -60,6 +56,3 @@ def auth_required(f):
         return f(*args, **kwargs)
     wrapper.__name__ = f.__name__
     return wrapper
-
-
-

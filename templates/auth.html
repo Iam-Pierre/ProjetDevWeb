@@ -5,14 +5,13 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Connexion</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}" />
-    <script src="{{ url_for('static', filename='js/scriptLogin.js') }}" defer></script>
+    <script src="{{ url_for('static', filename='js/scriptAuth.js') }}" defer></script>
 </head>
 <body>
     <header>
         <h1>Netflix.Io</h1>
         <p>Page de connexion/inscription</p>
     </header>
-
     <main>
         <article>
 
@@ -27,7 +26,7 @@
                         <input type="password" id="password">
                         <button type="submit">Se connecter</button>
                     </form>
-                    <button type="button" class="secondary" id="btnShowRegister">Pas de compte ? S'inscrire</button>
+                    <button type="button" class="secondary" id="btnRegister">Pas de compte ? S'inscrire</button>
                 </div>
             </div>
 
@@ -42,7 +41,7 @@
                         <input type="password" id="passwordRegister">
                         <button type="submit">S'inscrire</button>
                     </form>
-                    <button type="button" class="secondary" id="btnShowLogin">Déjà un compte ? Se connecter</button>
+                    <button type="button" class="secondary" id="btnLogin">Déjà un compte ? Se connecter</button>
                 </div>
             </div>
 
