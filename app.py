@@ -2,7 +2,7 @@ from flask import Flask, render_template, session, redirect
 from extensions import db, sess
 from models import User
 from routes.auth import apiAuth
-from routes.series import apiSeries
+from routes.accueil import apiAccueil
 from routes.avis import apiAvis
 from routes.recommendation import apiRecommendation
 
@@ -21,7 +21,7 @@ db.init_app(app)
 sess.init_app(app)
 
 app.register_blueprint(apiAuth)
-app.register_blueprint(apiSeries)
+app.register_blueprint(apiAccueil)
 app.register_blueprint(apiAvis)
 app.register_blueprint(apiRecommendation)
 
@@ -32,7 +32,7 @@ with app.app_context():
 def home():
     username = session.get("user",None)
     if username is not None:
-        return render_template("app.html")
+        return render_template("accueil.html")
     return render_template("auth.html")
 
 @app.route('/dashboard', methods=['GET'])
