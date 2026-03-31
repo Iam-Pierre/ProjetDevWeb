@@ -28,6 +28,8 @@ def home():
         return render_template("app.html")
     return render_template("auth.html")
 
+
+
 @app.route('/dashboard', methods=['GET'])
 def dashboard():
     username = session.get("user",None)

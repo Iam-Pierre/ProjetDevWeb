@@ -1,0 +1,76 @@
+<!DOCTYPE>
+<html>
+
+<head>
+    <meta charset="utf-8" />
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <title>GenAI</title>
+
+</head>
+
+<body>
+    <header>
+        <h3>GenAI</h3>
+        <nav>
+            <a href="./exercice1.html">Recommendation</a>
+            <a href="./exercice2.html">Avis</a>
+            <a href="./exercice3.html">Deconnecter</a>
+            <a href="https://cours22-23.ut-capitole.fr/course/view.php?id=14093">Le site de la fac</a>
+        </nav>
+    </header>
+    <main>
+        <article>
+            <form>
+                <div class="form-row">
+                    <div class="input-group">
+                        <label for="artiste">Nom de serie :</label>
+                        <input type="text" id="nom" name="nom" />
+                    </div>
+
+                    <div class="input-group">
+                        <label for="genre">Categorie :</label>
+                        <select id="category" name="category">
+                            {%for categorie in categories%}
+                            <option>{{categorie}}</option>
+                            {%endfor%}
+                        </select>
+                    </div>
+
+                    <div class="input-group">
+                        <label for="sortby">Trier par :</label>
+                        <div class="range-group" id="sortby">
+
+                            Note<label><input type="range" name="note" value="5" min="1" max="9" step="0.1"
+                                    oninput="document.getElementById('output').innerHTML = this.value" />
+
+                                <div id="output" style="display: inline-block;"> 5</div>
+
+                            </label>
+                        </div>
+                    </div>
+
+                     
+
+                </div>
+                    <div id ="bouton">
+                    <button id="categoryBtn">Parcourir par catégorie</button>
+                    <button>Afficher</button>
+                      <button id="top10">Top 10</button>
+                    </div>
+              
+                
+            </form>
+            <br>
+            <div id="tvmaze">
+            </div>
+        </article>
+        <aside id='info'>information complémentaire
+        </aside>
+    </main>
+    <footer>
+        <p>Copyright &#169; 2023</p>
+    </footer>
+</body>
+
+</html>
+<script src="{{ url_for('static', filename='scriptTvMaze.js')}}"></script>
