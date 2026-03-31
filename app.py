@@ -44,6 +44,12 @@ def dashboard():
     # pour récupérer la liste de clé on utilise le nom.api_keys, pareil pour user on peut récupérer le nom de l'utilisateur de la session
     return redirect("/")
 
+@app.route('/avis', methods=['GET'])
+def avis():
+    username = session.get("user", None)
+    if username is not None:
+        return render_template("avis.html")
+    return redirect("/")
 
 if __name__ == "__main__":
     app.run(host="127.0.0.1", port=5000, debug=True)

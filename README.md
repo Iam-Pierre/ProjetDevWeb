@@ -33,3 +33,4 @@ API_KEY=ta_clé_api
 - Ettore
 - Daniel
 - Pierre
+- Firat

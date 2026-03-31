@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Mes avis</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}" />
+    <script src="{{ url_for('static', filename='js/scriptAvis.js') }}" defer></script>
+</head>
+<body>
+    <header>
+        <h1>Disney -</h1>
+        <p>Mes avis sur les séries</p>
+    </header>
+    <main>
+        <article>
+
+            <!-- Barre de recherche -->
+            <div class="card">
+                <h2>Rechercher une série</h2>
+                <form id="formRecherche">
+                    <label for="searchInput">Nom de la série</label>
+                    <input type="text" id="searchInput" placeholder="Ex: Breaking Bad">
+                    <button type="submit">Rechercher</button>
+                </form>
+            </div>
+
+            <!-- Résultats de recherche -->
+            <div id="resultats"></div>
+
+            <!-- Mes avis enregistrés -->
+            <div class="card">
+                <h2>Mes avis enregistrés</h2>
+                <div id="mesAvis"></div>
+            </div>
+
+            <!-- Lien vers recommandations -->
+            <div class="card">
+                <a href="/recommandation">
+                    <button type="button">Voir mes recommandations →</button>
+                </a>
+            </div>
+
+        </article>
+    </main>
+    <footer>
+        <p>Disney -</p>
+    </footer>
+</body>
+</html>
