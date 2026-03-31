@@ -51,5 +51,12 @@ def avis():
         return render_template("avis.html")
     return redirect("/")
 
+@app.route('/recommandation', methods=['GET'])
+def recommandation():
+    username = session.get("user", None)
+    if username is not None:
+        return render_template("recommandation.html")
+    return redirect("/")
+
 if __name__ == "__main__":
     app.run(host="127.0.0.1", port=5000, debug=True)
