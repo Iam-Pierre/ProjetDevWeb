@@ -1,6 +1,7 @@
 import os
 import json
 import re
+from urllib import response
 import requests
 from dotenv import load_dotenv
 
@@ -94,16 +95,18 @@ Format attendu :
     "reason": "courte explication en français"
   }}
 ]
+
+Important :
+- retourne uniquement un tableau JSON valide
+- n'utilise pas de balises markdown
+- n'utilise pas ```json
+- aucune phrase avant ou après
+- exactement 5 objets
 """
     return prompt.strip()
 
 
 def appeler_gemini(prompt):
-    """
-    Cette fonction envoie le prompt à Gemini
-    puis récupère la réponse.
-    """
-
     if not GEMINI_API_KEY:
         raise RuntimeError("La clé API Gemini est absente.")
 
@@ -122,7 +125,6 @@ def appeler_gemini(prompt):
         ]
     }
 
-    # Appel HTTP POST vers Gemini
     response = requests.post(
         GEMINI_URL,
         headers=headers,
@@ -130,16 +132,37 @@ def appeler_gemini(prompt):
         timeout=30
     )
 
-    # Si erreur HTTP, on lève une exception
+    # Debug utile
+    print("Gemini status:", response.status_code)
+    print("Gemini body:", response.text[:1000])
+
     response.raise_for_status()
 
     data = response.json()
 
-    # On récupère le texte renvoyé par Gemini
-    texte = data["candidates"][0]["content"]["parts"][0]["text"]
+    candidates = data.get("candidates", [])
+    if not candidates:
+        raise RuntimeError(f"Aucun candidate renvoyé par Gemini: {data}")
 
-    # On transforme le texte JSON en liste Python
-    return json.loads(texte)
+    content = candidates[0].get("content", {})
+    parts = content.get("parts", [])
+    if not parts or "text" not in parts[0]:
+        raise RuntimeError(f"Réponse Gemini sans texte exploitable: {data}")
+
+    texte = parts[0]["text"].strip()
+
+    # Nettoyage si Gemini renvoie du markdown
+    if texte.startswith("```"):
+        texte = re.sub(r"^```json\s*", "", texte)
+        texte = re.sub(r"^```\s*", "", texte)
+        texte = re.sub(r"\s*```$", "", texte)
+        texte = texte.strip()
+
+    try:
+        return json.loads(texte)
+    except json.JSONDecodeError as e:
+        raise RuntimeError(f"JSON invalide renvoyé par Gemini.\nTexte reçu:\n{texte}") from e
+
 
 
 def enrichir_avec_tvmaze(title, reason):

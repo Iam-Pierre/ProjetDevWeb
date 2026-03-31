@@ -32,7 +32,16 @@ btnGenerer.addEventListener("click", async () => {
     try {
         // Appel de l'API Flask
         const response = await fetch(url);
-        const data = await response.json();
+        const raw = await response.text();
+
+        let data;
+        try {
+            data = JSON.parse(raw);
+        } catch (e) {
+            console.error("Réponse non JSON du backend :", raw);
+            zoneMessage.textContent = "Le serveur a renvoyé une réponse invalide.";
+            return;
+        }
 
         // Si le backend renvoie une erreur logique
         if (!data.ok) {
