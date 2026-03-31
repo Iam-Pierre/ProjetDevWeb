@@ -12,6 +12,9 @@ class User(db.Model):
     # Lien vers tous les avis de cet utilisateur
     avis = db.relationship('Avis', backref='user', lazy=True, cascade="all, delete-orphan")
 
+    @classmethod
+    def get_by_username(cls, username):
+        return cls.query.filter_by(username=username).first()
 class Serie(db.Model):
     """
     Cache enrichi des séries TV basé sur les données de TVmaze.
