@@ -1,21 +1,19 @@
 
 import math
 import os
-from flask import render_template, request, send_file,Flask
+from flask import Blueprint, render_template, request, send_file,Flask, session
 from matplotlib import category
 import requests
 import pandas as pd
 import matplotlib.pyplot as plt
+from extensions import db
 
 
-app = Flask(__name__, template_folder=os.path.join(os.path.dirname(__file__), 'template'), static_folder=os.path.join(os.path.dirname(__file__), 'static'))
+apiTvMaze = Blueprint('apiTvMaze', __name__)
 
-# print("Flask cherche ici:", app.template_folder)
-# print("Chemin absolu:", os.path.abspath(app.template_folder))
-# print("Ce dossier existe?", os.path.exists(os.path.abspath(app.template_folder)))
 
-@app.route("/")
-def home():
+@apiTvMaze.route('/accueil', methods=['GET'])
+def accueil():
     data = requests.get("https://api.tvmaze.com/shows").json()
     categorie = []
     data = pd.json_normalize(data)
@@ -30,10 +28,10 @@ def home():
     
     # Trier les catégories par ordre alphabétique
     categorie = sorted(categorie)
-    return render_template('acceuil.html', categories=categorie)  
+    return render_template('accueil.html', categories=categorie)  
 
 
-@app.route('/api/search_series', methods=['GET'])
+@apiTvMaze.route('/api/search_series', methods=['GET'])
 def api_shows():
     # Récupérer les paramètres de la requête + mettre en place les filtres + retourner les résultats
     # Ici j'appelle api externe depuis le backend
@@ -48,7 +46,7 @@ def api_shows():
     return data_filtered.to_json(orient='records')
 
 
-@app.route('/api/top10', methods=['GET'])
+@apiTvMaze.route('/api/top10', methods=['GET'])
 def top10():
     df = requests.get("https://api.tvmaze.com/shows").json()
     df = pd.json_normalize(df)
@@ -59,7 +57,7 @@ def top10():
 
     return data_filtered.to_json(orient='records')
 
-@app.route('/api/series_by_category', methods=['GET'])
+@apiTvMaze.route('/api/series_by_category', methods=['GET'])
 def series_by_category():
     cat = request.args.get('category')
     df = requests.get("https://api.tvmaze.com/shows").json()
@@ -76,7 +74,9 @@ def series_by_category():
     return data_filtered.to_json(orient='records')
     
 
+
+
 if __name__ == '__main__':
-    app.run(host="127.0.0.1", port=4000, debug=True)
+    apiTvMaze.run(host="127.0.0.1", port=4000, debug=True)
 
 

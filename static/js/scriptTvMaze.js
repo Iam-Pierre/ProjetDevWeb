@@ -2,6 +2,30 @@ const form = document.querySelector('form');
 const note = document.getElementById('note')
 const categoryBtn = document.getElementById('categoryBtn')
 const top10 = document.getElementById('top10');
+const resultsDiv = document.getElementById("tvmaze");
+const DeleteBtnContainer = document.createElement("div");
+const DeleteBtn = document.createElement("button");
+
+document.querySelectorAll('.deleteBtn').forEach(btn => {
+    btn.addEventListener('click', async () => {
+        const key = btn.dataset.key; 
+        const li = btn.parentElement;
+        const res = await fetch('/api/delete-series', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ key })
+        });
+
+        const result = await res.json();
+
+        if (result.ok) {
+            li.remove();
+        } else {
+            alert(result.error);
+        }
+    });
+});
+
 
 //  Methode avec API externe dans le backend
 form.addEventListener('submit', function (event) {
@@ -32,7 +56,8 @@ form.addEventListener('submit', function (event) {
                 const nombreDeSaisons = await getNbSaisons(serie["show.id"]);
                 const content_serie = buildSeriContent(serie, nombreDeSaisons);
                 resultsDiv.innerHTML += content_serie;
-
+                DeleteBtnContainer.innerHTML += `
+                <button type="button" class="deleteBtn"}">Supprimer </button>`;
             }
 
         }
@@ -87,7 +112,7 @@ function buildSeriContent(serie, nombreDeSaisons) {
              <span id="Rating">'Rating : ${serie["show.rating.average"]} '</span>
             <span id="Saisons">'Saisons : ${nombreDeSaisons}'</span>
             <span id="Resume">'Resume : ${serie["show.summary"]} '</span>
-             </div>
+                </div>
                 `;
                 } else {
                     contenu = `
@@ -125,8 +150,7 @@ top10.addEventListener('click', function (event) {
         .then(function (response) { return response.json(); })
         .then(async rawdata => {
           let data = rawdata;
-            // Affichage des résultats div dans le html
-            const resultsDiv = document.getElementById("tvmaze");
+
             resultsDiv.innerHTML = "";
             let i;
             console.log(data);
@@ -137,8 +161,13 @@ top10.addEventListener('click', function (event) {
                 const nombreDeSaisons = await getNbSaisons(serie["id"]);
                 const content_serie = buildSeriContent(serie, nombreDeSaisons);
                 resultsDiv.innerHTML += content_serie;
-
-            };
+                DeleteBtn.textContent = "Supprimer";
+                DeleteBtn.id = "deleteBtn";
+                DeleteBtn.dataset.key = serie["id"];
+                DeleteBtnContainer.appendChild(DeleteBtn);
+                resultsDiv.appendChild(DeleteBtnContainer);
+                console.log(serie["id"]);
+                     };
 
         })
         ;
@@ -160,7 +189,6 @@ console.log(category);
             let data = rawdata;
 
             // Affichage des résultats div dans le html
-
             const resultsDiv = document.getElementById("tvmaze");
             resultsDiv.innerHTML = "";
             
@@ -172,9 +200,20 @@ console.log(category);
                 const nombreDeSaisons = await getNbSaisons(serie["id"]);
                 const content_serie = buildSeriContent(serie, nombreDeSaisons);
                 resultsDiv.innerHTML += content_serie;
+                 DeleteBtnContainer.innerHTML += `
+                <button type="button" class="deleteBtn" data-key="${serie["id"]}">Supprimer </button>
+                `;
             }
 
         }
         )
         ;
+});
+
+document.addEventListener('click', function(e) {
+    if (e.target.classList.contains('deleteBtn')) {
+        const serieId = e.target.dataset.key;
+        console.log("Supprimer la série :", serieId);
+        // ton code de suppression ici
+    }
 });
