@@ -5,4 +5,4 @@ import pickle
 from extensions import db
 from models import User
 
-apiSeries = Blueprint("apiSeries", __name__)
+apiAccueil = Blueprint("apiAccueil", __name__)
