@@ -17,11 +17,13 @@ cd ton-repo
 python -m venv .venv
 .venv\Scripts\activate
 
-3. Installer les dépendances
+3. retournez à la racine du projet
+cd ..
+
+4. Installer les dépendances
 pip install -r requirements.txt
 
-4. Lancer l'application
-python app.py
+
 
 ## Variables d'environnement
 Créer un fichier `.env` à la racine :

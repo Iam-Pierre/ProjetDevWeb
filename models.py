@@ -1,64 +1,52 @@
 import hashlib
 from extensions import db
 import secrets
+from datetime import datetime
 
 class User(db.Model):
+    """Gère les comptes utilisateurs et l'authentification."""
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(80), unique=True, nullable=False)
     password_hash = db.Column(db.String(255), nullable=False)
-    # quota_used = db.Column(db.Integer, default=0, nullable=False)
-    # quota_max = db.Column(db.Integer, default=100, nullable=False)
-
-    # def consume_quota(self, amount=1):
-    #     if self.quota_used + amount > self.quota_max:
-    #         return False
-    #     self.quota_used += amount
-    #     db.session.commit()
-    #     return True
     
-    @classmethod
-    def get_by_username(cls, username):
-        return cls.query.filter_by(username=username).first()
-    
-class Avis(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    content = db.Column(db.Text, nullable=False)
-    user_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False)
-    user = db.relationship("User", backref="avis")
+    # Lien vers tous les avis de cet utilisateur
+    avis = db.relationship('Avis', backref='user', lazy=True, cascade="all, delete-orphan")
 
 class Serie(db.Model):
+    """
+    Cache enrichi des séries TV basé sur les données de TVmaze.
+    """
     id = db.Column(db.Integer, primary_key=True)
+    tvmaze_id = db.Column(db.Integer, unique=True, nullable=False)
     title = db.Column(db.String(255), nullable=False)
-    description = db.Column(db.Text, nullable=True)
-    avis_id = db.Column(db.Integer, db.ForeignKey("avis.id"), nullable=True)
-    avis = db.relationship("Avis", backref="serie")
+    image_url = db.Column(db.String(500), nullable=True)
+    
+    # Nouveaux champs basés sur ton API
+    genres = db.Column(db.String(255))      # Ex: "Drama, Sci-Fi"
+    status = db.Column(db.String(50))      # Ex: "Ended" ou "Running"
+    premiere = db.Column(db.String(50))    # Date de début
+    fin = db.Column(db.String(50))         # Date de fin
+    rating = db.Column(db.Float)           # Note moyenne (ex: 8.5)
+    saisons = db.Column(db.Integer)        # Nombre de saisons
+    resume = db.Column(db.Text)            # Le résumé (show.summary)
 
-# class ApiKey(db.Model):
-#     id = db.Column(db.Integer, primary_key=True)
-#     label = db.Column(db.String(100), nullable=False)
-#     key_hash = db.Column(db.String(255), unique=True, nullable=False)
-#     user_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False)
-#     user = db.relationship("User", backref="api_keys")
+    # Relation vers les avis
+    avis = db.relationship('Avis', backref='serie', lazy=True)
 
-#     def to_dict(self):
-#         return {
-#             "id": self.id,
-#             "label": self.label
-#         }
+class Avis(db.Model):
+    """
+    Table pivot stockant les choix de l'utilisateur.
+    C'est cette table qui "sauvegarde" l'état du menu déroulant.
+    """
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    serie_id = db.Column(db.Integer, db.ForeignKey('serie.id'), nullable=False)
+    
+    # Les 5 états autorisés (String pour la simplicité, ou Enum pour la rigueur)
+    # Valeurs : 'vu_aime', 'vu_pas_aime', 'vu_neutre', 'interesse', 'pas_interesse'
+    ressenti = db.Column(db.String(30), nullable=False)
+    
+    date_maj = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
-#     @classmethod
-#     def get_by_key(cls, raw_key):
-#         key_hash = hashlib.sha256(raw_key.encode()).hexdigest()
-#         return cls.query.filter_by(key_hash=key_hash).first()
-
-#     @classmethod
-#     def new(cls, user, label):
-#         raw_key = secrets.token_urlsafe(32)
-#         key_hash = hashlib.sha256(raw_key.encode()).hexdigest()
-
-#         api_key = cls(label=label,key_hash=key_hash,user_id=user.id)
-
-#         db.session.add(api_key)
-#         db.session.commit()
-
-#         return raw_key, api_key
+    # Sécurité : Empêche un utilisateur d'avoir 2 lignes pour la même série
+    __table_args__ = (db.UniqueConstraint('user_id', 'serie_id', name='_user_serie_uc'),)
