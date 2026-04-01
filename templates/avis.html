@@ -12,23 +12,50 @@
         <h1>Disney -</h1>
         <p>Mes avis sur les séries</p>
     </header>
+
     <main>
         <article>
-
-            <!-- Barre de recherche -->
+            <!-- Bloc recherche -->
             <div class="card">
                 <h2>Rechercher une série</h2>
                 <form id="formRecherche">
                     <label for="searchInput">Nom de la série</label>
-                    <input type="text" id="searchInput" placeholder="Ex: Breaking Bad">
+                    <input
+                        type="text"
+                        id="searchInput"
+                        placeholder="Ex: Breaking Bad"
+                    >
                     <button type="submit">Rechercher</button>
                 </form>
             </div>
 
-            <!-- Résultats de recherche -->
-            <div id="resultats"></div>
+            <!-- Bloc actions rapides -->
+            <div class="card">
+                <h2>Découvrir</h2>
 
-            <!-- Mes avis enregistrés -->
+                <div class="card-actions">
+                    <button type="button" id="top10">Voir le top 10</button>
+                </div>
+
+                <div style="margin-top: 1rem;">
+                    <label for="category">Parcourir par catégorie</label>
+                    <select id="category">
+                        <option value="">-- Choisir une catégorie --</option>
+                        {% for category in categories %}
+                            <option value="{{ category }}">{{ category }}</option>
+                        {% endfor %}
+                    </select>
+                    <button type="button" id="categoryBtn">Parcourir</button>
+                </div>
+            </div>
+
+            <!-- Résultats -->
+            <div class="card">
+                <h2>Résultats</h2>
+                <div id="resultats"></div>
+            </div>
+
+            <!-- Avis enregistrés -->
             <div class="card">
                 <h2>Mes avis enregistrés</h2>
                 <div id="mesAvis"></div>
@@ -40,9 +67,9 @@
                     <button type="button">Voir mes recommandations →</button>
                 </a>
             </div>
-
         </article>
     </main>
+
     <footer>
         <p>Disney -</p>
     </footer>
