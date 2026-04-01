@@ -32,7 +32,8 @@ with app.app_context():
 def home():
     username = session.get("user",None)
     if username is not None:
-        return render_template("accueil.html")
+        user = User.get_by_username(username)
+        return render_template("accueil.html", user=user)
     return render_template("auth.html")
 
 @app.route('/dashboard', methods=['GET'])
