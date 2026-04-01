@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Accueil</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}" />
+    <script src="{{ url_for('static', filename='js/scriptAccueil.js') }}" defer></script>
 </head>
 <body>
     <header>
@@ -15,15 +16,13 @@
     <main>
         <article>
             <div class="card">
-                <h2>Bienvenue</h2>
+                <h2>Bienvenue {{ user.username }}</h2>
                 <p>Choisis une action :</p>
 
-                <a href="/avis"><button type="button">Mes avis</button></a>
-                <a href="/recommandation"><button type="button">Mes recommandations</button></a>
+                <button type="button" id="idPage">Mes avis</button>
+                <button type="button" id="recommandationPage">Mes recommandations</button>
+                <button type="submit" id="logout">Se déconnecter</button>
 
-                <form action="/api/auth/logout" method="post">
-                    <button type="submit">Se déconnecter</button>
-                </form>
             </div>
         </article>
     </main>
