@@ -17,55 +17,16 @@
 
             <!-- Barre de recherche -->
             <div class="card">
-
-
                 <h2>Rechercher une série</h2>
-
-
                 <form id="formRecherche">
-
-                    <label for="serie">Nom de la série</label>
-                    <input type="text" id="serie" name = "serie" placeholder="Ex: Breaking Bad">
+                    <label for="searchInput">Nom de la série</label>
+                    <input type="text" id="searchInput" placeholder="Ex: Breaking Bad">
                     <button type="submit">Rechercher</button>
-                   
-
-
-
-                        <label for="category">Categorie :</label>
-                        <select id="category" name="category">
-                            {%for categorie in categories%}
-                            <option>{{categorie}}</option>
-                            {%endfor%}
-                        </select>
-
-
-                      
-                    <button id="categoryBtn">Parcourir par catégorie</button>
-                      <button id="top10">Top 10</button>
-                   
-
-
-                        <label for="tri">Trier par :</label>
-                        <div class="range-group" id="tri" name="tri">
-
-                            Note<label><input type="range" name="note" value="5" min="1" max="9" step="0.1"
-                                    oninput="document.getElementById('output').innerHTML = this.value" />
-
-                                <div id="output" style="display: inline-block;"> 5</div>
-
-                            </label>
-                    
-
                 </form>
-
-
-
             </div>
 
             <!-- Résultats de recherche -->
-            <div id="resultats">
-
-            </div>
+            <div id="resultats"></div>
 
             <!-- Mes avis enregistrés -->
             <div class="card">
@@ -81,8 +42,6 @@
                     <button type="button">Voir mes recommandations →</button>
                 </a>
             </div>
-
-            
 
         </article>
     </main>
