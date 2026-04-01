@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Recommandations</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}" />
+    <script src="{{ url_for('static', filename='js/scriptRecommandation.js') }}" defer></script>
+</head>
+<body>
+    <header>
+        <h1>Disney -</h1>
+        <p>Mes recommandations personnalisées</p>
+    </header>
+
+    <main>
+        <article>
+            <div class="card">
+                <h2>Demander des recommandations</h2>
+
+                <label for="preferencesInput">Précision supplémentaire</label>
+                <input
+                    type="text"
+                    id="preferencesInput"
+                    placeholder="Ex : je veux une série drôle, courte, avec du suspense"
+                >
+
+                <button id="btnGenerer" type="button">Générer</button>
+
+                <p id="message"></p>
+            </div>
+
+            <div id="recommandations"></div>
+
+            <div class="card">
+                <a href="/avis">
+                    <button type="button">Retour vers mes avis</button>
+                </a>
+            </div>
+        </article>
+    </main>
+
+    <footer>
+        <p>Disney -</p>
+    </footer>
+</body>
+</html>

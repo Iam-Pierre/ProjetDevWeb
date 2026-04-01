@@ -49,6 +49,19 @@ def dashboard():
     # pour récupérer la liste de clé on utilise le nom.api_keys, pareil pour user on peut récupérer le nom de l'utilisateur de la session
     return redirect("/")
 
+@app.route('/avis', methods=['GET'])
+def avis():
+    username = session.get("user", None)
+    if username is not None:
+        return render_template("avis.html")
+    return redirect("/")
+
+@app.route('/recommandation', methods=['GET'])
+def recommandation():
+    username = session.get("user", None)
+    if username is not None:
+        return render_template("recommandation.html")
+    return redirect("/")
 
 @app.route('/api/delete-series', methods=['POST'])
 def delete_series():

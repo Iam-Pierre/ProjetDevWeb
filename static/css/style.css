@@ -166,3 +166,41 @@ button.danger {
     gap: 10px;
     flex-wrap: wrap;
 }
+
+#resultats, #mesAvis {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: 20px;
+    margin-top: 20px;
+    text-align: center;
+    align-items: flex-start;
+}
+
+#resultats .card, #mesAvis .card {
+    flex: 0 0 auto;
+    width: 150px;
+}
+
+#mesAvis .card {
+    background-color: black;
+}
+
+#recommandations {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 20px;
+    align-items: flex-start;
+    justify-content: center;
+}
+
+#recommandations .card {
+    width: 280px;
+    max-width: 280px;
+}
+
+#recommandations img {
+    display: block;
+    width: 100%;
+    height: auto;
+}
