@@ -1,29 +1,92 @@
 // On récupère le formulaire de recherche
-const formRecherche = document.getElementById("formRecherche");
-
-// On écoute le "submit" du formulaire (comme dans scriptAuth.js)
-formRecherche.addEventListener("submit", async (e) => {
-    e.preventDefault(); // on empêche le rechargement de la page
-
-    const query = document.getElementById("searchInput").value;
-
-    // On appelle l'API TVmaze (publique, pas besoin de clé)
-    const response = await fetch(`https://api.tvmaze.com/search/shows?q=${query}`);
-    const data = await response.json();
-
-    // On affiche les résultats
-    afficherResultats(data);
-});
+const form = document.getElementById("formRecherche");
+const note = document.getElementById('note')
+const categoryBtn = document.getElementById('categoryBtn')
+const top10 = document.getElementById('top10');
+const resultsDiv = document.getElementById("resultats");
 
 
-function afficherResultats(series) {
-    const div = document.getElementById("resultats");
-    div.innerHTML = "";
 
-    // Si TVmaze ne trouve rien, on affiche un message
-    if (series.length === 0) {
-        div.innerHTML = "<p>Aucune série trouvée.</p>";
-        return;
+
+
+//  Methode avec API externe dans le backend
+form.addEventListener('submit', function (event) {
+    event.preventDefault();
+    data = Object.fromEntries(new FormData(form));
+
+    params = { query: data.serie + "&limit=60", category: data.category }
+
+    fetch(`/api/search_series?${new URLSearchParams(params)}`, {
+        method: 'GET',
+        headers: {
+            'Content-Type': 'application/json'
+        }
+    })
+        .then(function (response) { return response.json(); })
+        .then(async rawdata => {
+            let data = rawdata;
+                             resultsDiv.innerHTML = "";
+
+            // Affichage des résultats div dans le html
+            let i;
+            for (i = 0; i < data.length; i++) {
+                let DeleteBtnContainer = document.createElement("div");
+                let DeleteBtn = document.createElement("button");
+
+                const serie = data[i];
+                //Trouver le nombre de sasison de la série
+                const nombreDeSaisons = await getNbSaisons(serie["show.id"]);
+                const content_serie = buildSeriContent(serie, nombreDeSaisons);
+                //On mets le contenu dans le resultats div
+                resultsDiv.innerHTML += content_serie;
+
+                //Pour chaque card on ajoute un bouton supprimer
+                DeleteBtn.textContent = "Supprimer";
+                DeleteBtn.id = "deleteBtn";
+                DeleteBtn.dataset.key = serie["show.id"];
+
+                DeleteBtnContainer.appendChild(DeleteBtn);
+
+                resultsDiv.appendChild(DeleteBtnContainer);
+            }
+
+        }
+        )
+        ;
+})
+
+ //Trouver le nombre de sasison de la série
+ async function getNbSaisons(showId) {
+    const response = await fetch(`https://api.tvmaze.com/shows/${showId}/seasons`);
+    const seasons = await response.json();
+    let nombreDeSaisons = 0;
+    for (let j = 0; j < seasons.length; j++) {
+        if (seasons[j].number > nombreDeSaisons) {
+            nombreDeSaisons = seasons[j].number;
+        }
+    }
+    return nombreDeSaisons;
+}
+
+
+function buildSeriContent(serie, nombreDeSaisons) {
+    let contenu;
+    // On ajoute "show." devant le nom car l'api retourne show. et parfois sans le show 
+    //Donc on évite les problemes avec le show 
+    for(col in serie) {
+        if (!col.includes("show")) {
+        serie["show." + col] = serie[col];
+        delete serie[col];
+        }
+    }
+// Ce if est pour les séries qui n'ont pas de résumé, on met "N/A"
+    if (serie["show.summary"] === null) {
+        serie["show.summary"] = "N/A";
+    }
+
+    // ce if est pour les séries qui n'ont pas de genres, on met "N/A"
+    if (serie["show.genres"] === null || serie["show.genres"].length === 0) {
+        serie["show.genres"] = ["N/A"];
     }
 
     series.forEach((item) => {
