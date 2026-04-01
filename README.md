@@ -28,6 +28,7 @@ pip install -r requirements.txt
 ## Variables d'environnement
 Créer un fichier `.env` à la racine :
 API_KEY=ta_clé_api
+Youtube_API_KEY=ta_clé_api_youtube
 
 ## Équipe
 - Ettore
