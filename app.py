@@ -1,17 +1,15 @@
-from flask import Flask, render_template, request, session,redirect
+from flask import Flask, render_template, session, redirect
 from extensions import db, sess
 from models import User
 from routes.auth import apiAuth
 from routes.accueil import apiAccueil
 from routes.avis import apiAvis
 from routes.recommendation import apiRecommendation
-from routes.TvMaze import apiTvMaze  
-from models import Serie
-
 
 
 
 app = Flask(__name__)
+
 app.config["SECRET_KEY"] = "dev-secret"
 app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///app.db"
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
@@ -26,7 +24,6 @@ app.register_blueprint(apiAuth)
 app.register_blueprint(apiAccueil)
 app.register_blueprint(apiAvis)
 app.register_blueprint(apiRecommendation)
-app.register_blueprint(apiTvMaze)
 
 with app.app_context():
     db.create_all()
@@ -35,10 +32,8 @@ with app.app_context():
 def home():
     username = session.get("user",None)
     if username is not None:
-        return redirect('/avis')
+        return render_template("accueil.html")
     return render_template("auth.html")
-
-
 
 @app.route('/dashboard', methods=['GET'])
 def dashboard():
@@ -62,23 +57,6 @@ def recommandation():
     if username is not None:
         return render_template("recommandation.html")
     return redirect("/")
-
-@app.route('/api/delete-series', methods=['POST'])
-def delete_series():
-    if 'user_id' not in session:
-        return {"error": "non connecté"}, 401
-
-    data = request.get_json()
-    key = data.get('key')
-
-    api_key = Serie.query.filter_by(key=key, user_id=session['user_id']).first()
-    if not api_key:
-        return {"error": "clé API non trouvée"}, 404
-
-    db.session.delete(api_key)
-    db.session.commit()
-
-    return {"ok": True}
 
 if __name__ == "__main__":
     app.run(host="127.0.0.1", port=5000, debug=True)
