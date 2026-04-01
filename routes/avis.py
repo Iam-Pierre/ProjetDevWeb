@@ -4,6 +4,8 @@ import requests
 from extensions import db
 from models import Serie, Avis
 from routes.auth import login_required
+import os
+import requests
 
 apiAvis = Blueprint("apiAvis", __name__)
 
