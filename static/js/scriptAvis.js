@@ -15,7 +15,6 @@ formRecherche.addEventListener("submit", async (e) => {
     afficherResultats(data);
 });
 
-
 function afficherResultats(series) {
     const div = document.getElementById("resultats");
     div.innerHTML = "";
@@ -44,6 +43,7 @@ function afficherResultats(series) {
         card.innerHTML = `
             <img src="${imgUrl}" alt="${show.name}" style="width:100px">
             <h3>${show.name}</h3>
+            <button type="button" onclick="TrailerYoutube('${show.name}')">▶️ Trailer</button>
             <select id="ressenti-${show.id}">
                 <option value="vu_aime">Vu & Aimé</option>
                 <option value="vu_neutre">Vu & Neutre</option>
@@ -122,4 +122,37 @@ async function chargerAvis() {
 
         mesAvis.appendChild(card);
     });
+}
+
+async function TrailerYoutube(nomSerie) {
+
+    console.log("Recherche du trailer pour : " + nomSerie);
+    const nomEncode = encodeURIComponent(nomSerie);
+    console.log("Nom encodé pour l'URL :", nomEncode);
+
+    try {
+        // 2. On appelle TA route Flask (qu'on va créer juste après)
+        // On utilise l'URL relative /api/get_trailer
+        const response = await fetch(`/api/get_trailer?nom=${nomEncode}`);
+
+        // 3. On vérifie si le serveur a bien répondu (status 200)
+        if (!response.ok) {
+            throw new Error("Erreur serveur");
+        }
+
+        // 4. On transforme la réponse en JSON
+        const data = await response.json();
+
+        // 5. Si on a l'URL, on ouvre l'onglet
+        if (data.video_url) {
+            window.open(data.video_url, '_blank');
+        }
+
+    } catch (error) {
+        console.error("Erreur lors de l'appel à la route :", error);
+        // Plan B : si la route Flask n'est pas encore prête ou plante, 
+        // on ouvre quand même YouTube en direct pour ne pas bloquer l'utilisateur
+        const backupUrl = `https://www.youtube.com/results?search_query=${nomEncode}+trailer`;
+        window.open(backupUrl, '_blank');
+    }
 }
