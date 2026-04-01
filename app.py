@@ -35,7 +35,7 @@ with app.app_context():
 def home():
     username = session.get("user",None)
     if username is not None:
-        return redirect('/accueil')
+        return redirect('/avis')
     return render_template("auth.html")
 
 

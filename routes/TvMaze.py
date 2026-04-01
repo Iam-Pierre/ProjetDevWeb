@@ -12,7 +12,7 @@ from extensions import db
 apiTvMaze = Blueprint('apiTvMaze', __name__)
 
 
-@apiTvMaze.route('/accueil', methods=['GET'])
+@apiTvMaze.route('/avis', methods=['GET'])
 def accueil():
     data = requests.get("https://api.tvmaze.com/shows").json()
     categorie = []
@@ -28,7 +28,7 @@ def accueil():
     
     # Trier les catégories par ordre alphabétique
     categorie = sorted(categorie)
-    return render_template('accueil.html', categories=categorie)  
+    return render_template('avis.html', categories=categorie)  
 
 
 @apiTvMaze.route('/api/search_series', methods=['GET'])
@@ -41,7 +41,6 @@ def api_shows():
     df = pd.json_normalize(df)
     
     df['show.rating.average'] = df['show.rating.average'].fillna(1)
-    
     data_filtered = df
     return data_filtered.to_json(orient='records')
 
