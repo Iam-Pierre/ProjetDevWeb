@@ -183,6 +183,12 @@ document.addEventListener("DOMContentLoaded", () => {
     // Rendu des cards
     // =========================================================
 
+    function stripHtml(html) {
+        const tmp = document.createElement("div");
+        tmp.innerHTML = html;
+        return tmp.textContent || tmp.innerText || "";
+    }
+
     function buildCardHtml(serie, options = {}) {
         const {
             ressentiSelectionne = "vu_aime",
@@ -215,7 +221,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 ${endedTexte ? `<p><strong>Fin :</strong> ${escapeHtml(endedTexte)}</p>` : ""}
                 <p><strong>Rating :</strong> ${escapeHtml(ratingTexte)}</p>
                 <p><strong>Saisons :</strong> ${escapeHtml(saisonsTexte)}</p>
-                <p><strong>Résumé :</strong> ${escapeHtml(summaryTexte)}</p>
+                <p><strong>Résumé :</strong> ${escapeHtml(stripHtml(summaryTexte))}</p>
 
                 <div class="card-actions">
 

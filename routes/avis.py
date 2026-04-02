@@ -1,42 +1,69 @@
 from flask import Blueprint, render_template, request, g, jsonify
+import os
 import requests
 
 from extensions import db
 from models import Serie, Avis
 from routes.auth import login_required
-import os
-import requests
 
+# Création du blueprint pour regrouper toutes les routes liées aux avis
 apiAvis = Blueprint("apiAvis", __name__)
 
+# URL de base de l'API TVMaze
 TVMAZE_BASE_URL = "https://api.tvmaze.com"
+
+# Image par défaut si une série n'a pas d'image
 FALLBACK_IMAGE = "/static/manque.png"
 
 
 # ==========================================================
-# Helpers TVMaze
+# Helpers généraux
 # ==========================================================
+
+def fetch_json(url, params=None, timeout=10):
+    """
+    Cette fonction sert à faire un appel HTTP GET vers une API
+    et à retourner directement la réponse en JSON.
+
+    url : l'URL à appeler
+    params : les paramètres éventuels de la requête
+    timeout : temps max d'attente avant d'abandonner
+    """
+    response = requests.get(url, params=params, timeout=timeout)
+
+    # Si l'API répond avec une erreur HTTP (404, 500, etc.),
+    # cette ligne déclenche une exception
+    response.raise_for_status()
+
+    # On transforme la réponse en dictionnaire / liste Python
+    return response.json()
+
 
 def fetch_tvmaze_json(endpoint, params=None):
     """
-    Appelle l'API TVMaze et retourne le JSON.
-    Lève une exception si la requête échoue.
+    Cette fonction est spécialisée pour TVMaze.
+
+    Au lieu d'écrire à chaque fois l'URL complète :
+    https://api.tvmaze.com/...
+    on donne juste l'endpoint, par exemple "/shows"
     """
-    response = requests.get(
-        f"{TVMAZE_BASE_URL}{endpoint}",
-        params=params,
-        timeout=10
-    )
-    response.raise_for_status()
-    return response.json()
+    return fetch_json(f"{TVMAZE_BASE_URL}{endpoint}", params=params)
 
 
 def serialize_show(show):
     """
-    Normalise une série TVMaze dans un format unique
-    pour simplifier le frontend.
+    Cette fonction prend une série renvoyée par TVMaze
+    et la transforme dans un format plus simple et uniforme.
+
+    Le but :
+    -> avoir toujours les mêmes clés côté frontend
+    -> éviter de manipuler directement la structure brute de TVMaze
     """
+
+    # Certaines séries n'ont pas forcément d'image
     image = show.get("image") or {}
+
+    # Certaines séries n'ont pas forcément de note
     rating = show.get("rating") or {}
 
     return {
@@ -52,24 +79,38 @@ def serialize_show(show):
     }
 
 
+def tvmaze_error():
+    """
+    Petite fonction utilitaire pour éviter de répéter
+    le même message d'erreur dans plusieurs routes.
+    """
+    return {"error": "Impossible de contacter TVMaze."}, 502
+
+
 def get_all_shows():
     """
-    Récupère une liste globale de séries.
+    Récupère une liste globale de séries depuis TVMaze.
     """
     return fetch_tvmaze_json("/shows")
 
 
 def get_all_categories():
     """
-    Construit la liste des genres disponibles.
+    Cette fonction construit la liste de tous les genres disponibles.
+    Idée :
+    1. On récupère toutes les séries
+    2. On parcourt tous leurs genres
+    3. On stocke les genres dans un set pour éviter les doublons
+    4. On trie le résultat à la fin
     """
     shows = get_all_shows()
-    categories = set()
 
-    for show in shows:
-        for genre in show.get("genres") or []:
-            if isinstance(genre, str) and genre.strip():
-                categories.add(genre.strip())
+    categories = {
+        genre.strip()
+        for show in shows
+        for genre in (show.get("genres") or [])
+        if isinstance(genre, str) and genre.strip()
+    }
 
     return sorted(categories)
 
@@ -82,7 +123,14 @@ def get_all_categories():
 @login_required
 def page_avis():
     """
-    Affiche la page des avis.
+    Affiche la page HTML des avis.
+
+    On essaie de charger les catégories pour remplir
+    par exemple un select côté frontend.
+
+    Si jamais TVMaze ne répond pas,
+    on évite de faire planter la page :
+    on envoie juste une liste vide.
     """
     try:
         categories = get_all_categories()
@@ -100,26 +148,36 @@ def page_avis():
 @login_required
 def api_search_series():
     """
-    Recherche de séries par nom.
+    Recherche des séries par nom.
+
+    Exemple :
+    /api/search_series?query=breaking bad
+
+    Le frontend envoie un texte,
+    puis on interroge l'API TVMaze avec ce texte.
     """
     query = (request.args.get("query") or "").strip()
 
+    # Si l'utilisateur n'a rien envoyé, on renvoie une erreur 400
     if not query:
         return {"error": "Le paramètre 'query' est requis."}, 400
 
     try:
+        # Appel à l'API TVMaze
         results = fetch_tvmaze_json("/search/shows", params={"q": query})
 
-        shows = []
-        for item in results:
-            show = item.get("show")
-            if show:
-                shows.append(serialize_show(show))
+        # TVMaze renvoie une liste d'objets contenant chacun une clé "show"
+        # Ici on garde seulement la partie utile
+        shows = [
+            serialize_show(item["show"])
+            for item in results
+            if item.get("show")
+        ]
 
         return shows
 
     except requests.RequestException:
-        return {"error": "Impossible de contacter TVMaze."}, 502
+        return tvmaze_error()
 
 
 @apiAvis.route("/api/top10", methods=["GET"])
@@ -127,27 +185,34 @@ def api_search_series():
 def api_top10():
     """
     Retourne un top 10 des séries les mieux notées.
+
+    Étapes :
+    1. On récupère les séries
+    2. On les normalise avec serialize_show
+    3. On les trie par note décroissante
+    4. On garde les 10 premières
     """
     try:
-        shows = get_all_shows()
-        normalized = [serialize_show(show) for show in shows]
+        shows = [serialize_show(show) for show in get_all_shows()]
 
-        normalized.sort(
-            key=lambda s: s["rating"] if s["rating"] is not None else 0,
-            reverse=True
-        )
+        # On trie du plus grand rating vers le plus petit
+        # Si rating vaut None, on prend 0 pour éviter les erreurs
+        shows.sort(key=lambda s: s["rating"] or 0, reverse=True)
 
-        return normalized[:10]
+        return shows[:10]
 
     except requests.RequestException:
-        return {"error": "Impossible de contacter TVMaze."}, 502
+        return tvmaze_error()
 
 
 @apiAvis.route("/api/series_by_category", methods=["GET"])
 @login_required
 def api_series_by_category():
     """
-    Retourne jusqu'à 20 séries d'une catégorie donnée.
+    Retourne jusqu'à 20 séries d'un genre donné.
+
+    Exemple :
+    /api/series_by_category?category=Drama
     """
     category = (request.args.get("category") or "").strip()
 
@@ -155,18 +220,17 @@ def api_series_by_category():
         return {"error": "Le paramètre 'category' est requis."}, 400
 
     try:
-        shows = get_all_shows()
-
-        filtered = []
-        for show in shows:
-            genres = show.get("genres") or []
-            if category in genres:
-                filtered.append(serialize_show(show))
+        # On filtre seulement les séries qui contiennent le genre demandé
+        filtered = [
+            serialize_show(show)
+            for show in get_all_shows()
+            if category in (show.get("genres") or [])
+        ]
 
         return filtered[:20]
 
     except requests.RequestException:
-        return {"error": "Impossible de contacter TVMaze."}, 502
+        return tvmaze_error()
 
 
 # ==========================================================
@@ -177,47 +241,65 @@ def api_series_by_category():
 @login_required
 def enregistrer_avis():
     """
-    Crée ou met à jour l'avis d'un utilisateur sur une série.
+    Cette route sert à enregistrer l'avis d'un utilisateur sur une série.
+
+    Elle gère 2 cas :
+    - soit la série n'existe pas encore en base -> on la crée
+    - soit elle existe déjà -> on met à jour les infos si besoin
+
+    Ensuite :
+    - soit l'utilisateur n'a pas encore donné son avis -> on crée l'avis
+    - soit il a déjà donné un avis -> on le met à jour
     """
     data = request.get_json() or {}
 
+    # On récupère les données envoyées par le frontend
     tvmaze_id = data.get("tvmaze_id")
     nom = (data.get("nom") or "").strip()
     image_url = (data.get("image_url") or "").strip() or FALLBACK_IMAGE
     ressenti = (data.get("ressenti") or "").strip()
 
+    # Vérifications minimales
     if not tvmaze_id:
         return {"error": "tvmaze_id manquant."}, 400
-
     if not nom:
         return {"error": "nom manquant."}, 400
-
     if not ressenti:
         return {"error": "ressenti manquant."}, 400
 
-    # Retrouver ou créer la série
+    # ------------------------------------------------------
+    # Étape 1 : retrouver ou créer la série
+    # ------------------------------------------------------
     serie = Serie.query.filter_by(tvmaze_id=tvmaze_id).first()
 
     if serie is None:
+        # La série n'existe pas encore en base
         serie = Serie(
             tvmaze_id=tvmaze_id,
             title=nom,
             image_url=image_url
         )
         db.session.add(serie)
+
+        # flush() permet d'envoyer provisoirement l'objet à la base
+        # pour que son id soit généré avant le commit final
         db.session.flush()
     else:
-        # Met à jour les infos si besoin
+        # Si la série existe déjà, on met à jour ses infos
+        # au cas où elles auraient changé
         serie.title = nom
         serie.image_url = image_url
 
-    # Retrouver ou créer l'avis utilisateur
+    # ------------------------------------------------------
+    # Étape 2 : retrouver ou créer l'avis de l'utilisateur
+    # ------------------------------------------------------
     avis = Avis.query.filter_by(
         user_id=g.user.id,
         serie_id=serie.id
     ).first()
 
     if avis is None:
+        # L'utilisateur n'avait jamais donné son avis sur cette série
         avis = Avis(
             user_id=g.user.id,
             serie_id=serie.id,
@@ -225,9 +307,12 @@ def enregistrer_avis():
         )
         db.session.add(avis)
     else:
+        # L'utilisateur avait déjà un avis : on le remplace
         avis.ressenti = ressenti
 
+    # Sauvegarde définitive en base
     db.session.commit()
+
     return {"ok": True}
 
 
@@ -236,17 +321,21 @@ def enregistrer_avis():
 def get_avis():
     """
     Retourne tous les avis de l'utilisateur connecté.
+
+    On filtre avec user_id = utilisateur courant
+    pour que chacun ne voie que ses propres avis.
     """
     avis_list = Avis.query.filter_by(user_id=g.user.id).all()
 
-    resultat = []
-    for avis in avis_list:
-        resultat.append({
+    resultat = [
+        {
             "tvmaze_id": avis.serie.tvmaze_id,
             "nom": avis.serie.title,
             "image_url": avis.serie.image_url,
             "ressenti": avis.ressenti
-        })
+        }
+        for avis in avis_list
+    ]
 
     return {"avis": resultat}
 
@@ -256,8 +345,10 @@ def get_avis():
 def delete_series():
     """
     Supprime l'avis de l'utilisateur sur une série.
-    Si plus aucun avis ne référence cette série,
-    on supprime aussi la série.
+
+    Et si après suppression plus personne n'a d'avis sur cette série,
+    on supprime aussi la série de la base pour éviter de garder
+    des données inutiles.
     """
     data = request.get_json() or {}
     tvmaze_id = data.get("tvmaze_id")
@@ -265,10 +356,12 @@ def delete_series():
     if not tvmaze_id:
         return {"error": "tvmaze_id manquant."}, 400
 
+    # On cherche la série
     serie = Serie.query.filter_by(tvmaze_id=tvmaze_id).first()
     if serie is None:
         return {"error": "Série introuvable."}, 404
 
+    # On cherche l'avis de l'utilisateur connecté sur cette série
     avis = Avis.query.filter_by(
         user_id=g.user.id,
         serie_id=serie.id
@@ -277,55 +370,65 @@ def delete_series():
     if avis is None:
         return {"error": "Avis introuvable."}, 404
 
+    # On supprime l'avis
     db.session.delete(avis)
     db.session.flush()
 
-    remaining_avis = Avis.query.filter_by(serie_id=serie.id).first()
-    if remaining_avis is None:
+    # On vérifie s'il reste encore des avis liés à cette série
+    if Avis.query.filter_by(serie_id=serie.id).first() is None:
         db.session.delete(serie)
 
     db.session.commit()
     return {"ok": True}
 
+
+# ==========================================================
+# API trailer YouTube
+# ==========================================================
+
 @apiAvis.route("/api/get_trailer", methods=["GET"])
 @login_required
 def get_trailer():
+    """
+    Cette route cherche une bande-annonce YouTube
+    pour une série donnée.
 
-    nom_serie = request.args.get("nom")
-    # Récupère ta clé depuis le fichier .env (très important pour la sécurité !)
-    api_key = os.getenv("YOUTUBE_API_KEY") 
+    Le frontend envoie le nom de la série,
+    puis on utilise l'API YouTube pour récupérer
+    le premier résultat vidéo.
+    """
+    nom_serie = (request.args.get("nom") or "").strip()
+
+    # Clé API stockée dans le .env
+    api_key = os.getenv("YOUTUBE_API_KEY")
 
     if not nom_serie:
         return jsonify({"error": "Nom manquant"}), 400
 
-    # 1. Configuration de l'appel à l'API YouTube
     search_url = "https://www.googleapis.com/youtube/v3/search"
+
     params = {
-        'part': 'id',
-        'q': f"{nom_serie} official trailer",
-        'type': 'video',
-        'maxResults': 1, # On ne veut QUE la première vidéo
-        'key': api_key
+        "part": "id",
+        "q": f"{nom_serie} official trailer",
+        "type": "video",
+        "maxResults": 1,
+        "key": api_key
     }
 
     try:
-        # 2. On demande à Google l'ID de la vidéo
-        response = requests.get(search_url, params=params)
-        data = response.json()
+        data = fetch_json(search_url, params=params)
 
-        # 3. On extrait l'ID de la vidéo
-        if 'items' in data and len(data['items']) > 0:
-            video_id = data['items'][0]['id']['videoId']
-            # On construit le lien DIRECT vers le lecteur
-            direct_url = f"https://www.youtube.com/watch?v={video_id}"
-            
+        # Si au moins une vidéo est trouvée
+        if data.get("items"):
+            video_id = data["items"][0]["id"]["videoId"]
+
+            # On construit le lien YouTube
             return jsonify({
-                "ok": True, 
-                "video_url": direct_url
+                "ok": True,
+                "video_url": f"https://www.youtube.com/watch?v={video_id}"
             })
-        
+
         return jsonify({"error": "Aucune vidéo trouvée"}), 404
 
-    except Exception as e:
-        print(f"Erreur API YouTube: {e}")
+    except requests.RequestException:
         return jsonify({"error": "Erreur serveur"}), 500
