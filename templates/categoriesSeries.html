@@ -9,8 +9,17 @@
 </head>
 <body>
     <header>
-        <h1>Disney -</h1>
-        <p>Explorer par catégorie</p>
+    <div class="nav-container">
+        <div class="logo-section">
+            <h1>Disney -</h1>
+        </div>
+            <div class="nav-buttons">
+                <button class="nav-btn" type="button" id="accueil-btn">Accueil</button>
+                <button class="nav-btn" type="button" id="series-btn">Mes séries</button>
+                <button class="nav-btn btn-special" type="button" id="recommandations-btn">IA Recommandations</button>
+            </div>
+        </div>
+    </div>
     </header>
 
         <main>
@@ -31,11 +40,11 @@
                             <option value="{{ category }}">{{ category }}</option>
                         {% endfor %}
                     </select>
+                    <br>
                     <button type="button" id="categoryBtn">Parcourir</button>
                 </div>
             </div> 
 
-            <!-- Résultats -->
             <div class="card">
                 <h2>Résultats</h2>
                 <div id="resultats"></div>

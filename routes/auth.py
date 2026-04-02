@@ -8,12 +8,6 @@ from models import User
 apiAuth = Blueprint("apiAuth", __name__)
 
 def login_required(f):
-    """
-        session uniquement
-
-        grace à la variable g.user, on peut accéder à l'utilisateur connecté 
-        dans les fonctions de route protégées par ce décorateur
-    """
     def wrapper(*args, **kwargs):
         if "user" not in session:
             return {"error": "non autorisé"}, 401
@@ -30,12 +24,7 @@ def login_required(f):
 
 
 def auth_required(f):
-    """
-        session ou clé API
-        
-        grace à la variable g.user, on peut accéder à l'utilisateur connecté 
-        dans les fonctions de route protégées par ce décorateur
-    """
+
     def wrapper(*args, **kwargs):
         user = None
 
@@ -51,7 +40,7 @@ def auth_required(f):
     return wrapper
 
 
-### Routes pour s'enregistrer 
+#routes pour s'enregistrer 
 
 @apiAuth.route("/api/auth/register", methods=["POST"])
 def register():
@@ -74,8 +63,7 @@ def register():
 
     return {"ok": True, "message": "enregistré et connecté"}, 201
 
-## Routes d'authentification
-
+# routes d'authentif
 @apiAuth.route("/api/auth/login", methods=["POST"])
 def login():
     data = request.get_json()

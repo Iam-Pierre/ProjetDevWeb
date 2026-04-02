@@ -5,45 +5,31 @@ from urllib import response
 import requests
 from dotenv import load_dotenv
 
-# Charge les variables du fichier .env
 load_dotenv()
 
-# On récupère la clé API et le nom du modèle Gemini
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
 GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-2.5-flash")
 
-# URL de l'API Gemini
 GEMINI_URL = f"https://generativelanguage.googleapis.com/v1beta/models/{GEMINI_MODEL}:generateContent"
 
-# URL de l'API TVmaze pour chercher une série par son nom
 TVMAZE_URL = "https://api.tvmaze.com/singlesearch/shows"
 
 
 def nettoyer_html(texte):
-    """
-    Certains résumés TVmaze contiennent des balises HTML.
-    Cette fonction les enlève pour garder un texte propre.
-    """
+
     if not texte:
         return ""
     return re.sub(r"<[^>]+>", "", texte).strip()
 
 
 def construire_prompt(avis_utilisateur, texte_libre=""):
-    """
-    Cette fonction construit le texte qu'on envoie à Gemini.
-
-    On sépare les séries selon le ressenti de l'utilisateur
-    pour que Gemini comprenne mieux ses goûts.
-    """
-
     series_aimees = []
     series_neutres = []
     series_pas_aimees = []
     series_interessantes = []
     series_pas_interessantes = []
 
-    # On parcourt tous les avis enregistrés en base
+    # Onparcourt tous les avis enregistrés en BDD
     for avis in avis_utilisateur:
         titre = avis["title"]
         ressenti = avis["ressenti"]
@@ -59,11 +45,10 @@ def construire_prompt(avis_utilisateur, texte_libre=""):
         elif ressenti == "pas_interesse":
             series_pas_interessantes.append(titre)
 
-    # Si l'utilisateur n'a rien écrit, on le précise
+    # si rien écrit, on le précise
     if texte_libre.strip() == "":
         texte_libre = "aucune précision supplémentaire"
 
-    # Prompt simple, lisible, et facile à expliquer
     prompt = f"""
 Tu es un moteur de recommandation de séries TV.
 
@@ -108,7 +93,7 @@ Important :
 
 def appeler_gemini(prompt):
     if not GEMINI_API_KEY:
-        raise RuntimeError("La clé API Gemini est absente.")
+        raise RuntimeError("clé API Gemini absente")
 
     headers = {
         "Content-Type": "application/json",
@@ -132,7 +117,7 @@ def appeler_gemini(prompt):
         timeout=30
     )
 
-    # Debug utile
+    # Debug
     print("Gemini status:", response.status_code)
     print("Gemini body:", response.text[:1000])
 
@@ -142,16 +127,16 @@ def appeler_gemini(prompt):
 
     candidates = data.get("candidates", [])
     if not candidates:
-        raise RuntimeError(f"Aucun candidate renvoyé par Gemini: {data}")
+        raise RuntimeError(f"Aucun résultat renvoyé par Gemini: {data}")
 
     content = candidates[0].get("content", {})
     parts = content.get("parts", [])
     if not parts or "text" not in parts[0]:
-        raise RuntimeError(f"Réponse Gemini sans texte exploitable: {data}")
+        raise RuntimeError(f"Réponse Gemini sans texte : {data}")
 
     texte = parts[0]["text"].strip()
 
-    # Nettoyage si Gemini renvoie du markdown
+    #si JSON invalide
     if texte.startswith("```"):
         texte = re.sub(r"^```json\s*", "", texte)
         texte = re.sub(r"^```\s*", "", texte)
@@ -161,20 +146,12 @@ def appeler_gemini(prompt):
     try:
         return json.loads(texte)
     except json.JSONDecodeError as e:
-        raise RuntimeError(f"JSON invalide renvoyé par Gemini.\nTexte reçu:\n{texte}") from e
+        raise RuntimeError(f"JSON invalide renvoyé par Gemini.Texte reçu:{texte}") from e
 
 
 
 def enrichir_avec_tvmaze(title, reason):
-    """
-    Gemini renvoie surtout un titre et une raison.
-    Cette fonction interroge TVmaze pour récupérer :
-    - image
-    - genres
-    - note
-    - résumé
-    """
-
+  
     try:
         response = requests.get(
             TVMAZE_URL,
@@ -215,7 +192,7 @@ def enrichir_avec_tvmaze(title, reason):
         }
 
     except Exception:
-        # En cas d'erreur TVmaze, on garde quand même une reco minimale
+        # si'erreur TVmaze, on garde quand même une reco minimale
         return {
             "title": title,
             "reason": reason,
@@ -228,24 +205,13 @@ def enrichir_avec_tvmaze(title, reason):
 
 
 def generer_recommandations(avis_utilisateur, texte_libre=""):
-    """
-    Fonction principale appelée par Flask.
 
-    Étapes :
-    1. construire le prompt
-    2. appeler Gemini
-    3. enrichir les résultats avec TVmaze
-    4. renvoyer une liste finale de recommandations
-    """
-
-    # Construction du prompt
     prompt = construire_prompt(avis_utilisateur, texte_libre)
 
-    # Appel à Gemini
+    # appel à gemini
     suggestions = appeler_gemini(prompt)
 
-    # Liste des séries déjà connues de l'utilisateur
-    # pour éviter de les recommander à nouveau
+    # séries déjà vu pour éviter de les recommander à nouveau
     titres_deja_vus = []
     for avis in avis_utilisateur:
         titres_deja_vus.append(avis["title"].lower())
@@ -256,15 +222,14 @@ def generer_recommandations(avis_utilisateur, texte_libre=""):
         titre = suggestion.get("title", "").strip()
         raison = suggestion.get("reason", "").strip()
 
-        # Si Gemini renvoie une série vide, on ignore
+        # Si série vide, on ignore
         if titre == "":
             continue
 
-        # Si Gemini propose une série déjà connue, on ignore
+        # Si série déjà connue, on ignore
         if titre.lower() in titres_deja_vus:
             continue
 
-        # On enrichit avec TVmaze
         serie_complete = enrichir_avec_tvmaze(titre, raison)
         recommandations.append(serie_complete)
 

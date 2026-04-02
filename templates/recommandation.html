@@ -9,8 +9,17 @@
 </head>
 <body>
     <header>
-        <h1>Disney -</h1>
-        <p>Mes recommandations personnalisées</p>
+    <div class="nav-container">
+        <div class="logo-section">
+            <h1>Disney -</h1>
+        </div>
+            <div class="nav-buttons">
+                <button class="nav-btn" type="button" id="accueil-btn">Accueil</button>
+                <button class="nav-btn" type="button" id="series-btn">Series </button>
+                <button class="nav-btn" type="button" id="categories-btn">Catégories</button>
+            </div>
+        </div>
+    </div>
     </header>
 
     <main>
@@ -24,22 +33,12 @@
                     id="preferencesInput"
                     placeholder="Ex : je veux une série drôle, courte, avec du suspense"
                 >
-
                 <button id="btnGenerer" type="button">Générer</button>
-
                 <p id="message"></p>
             </div>
-
             <div id="recommandations"></div>
-
-            <div class="card">
-                <a href="/avis">
-                    <button type="button">Retour vers mes avis</button>
-                </a>
-            </div>
         </article>
     </main>
-
     <footer>
         <p>Disney -</p>
     </footer>
