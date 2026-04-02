@@ -201,11 +201,14 @@ document.addEventListener("DOMContentLoaded", () => {
                 ? String(nombreDeSaisons)
                 : "N/A";
         const summaryTexte = safeText(serie.summary);
-
+        const nomPourLien = serie.nom.replace(/'/g, "\\'");
         return `
             <img class="logo" src="${escapeHtml(serie.image_url)}" alt="${escapeHtml(serie.nom)}">
             <div class="serie-content">
                 <h3>${escapeHtml(serie.nom)}</h3>
+                <button type="button" class="btn-trailer" onclick="TrailerYoutube('${nomPourLien}')">
+                    ▶️ Trailer
+                </button>
                 <p><strong>Genres :</strong> ${escapeHtml(genresTexte)}</p>
                 <p><strong>Status :</strong> ${escapeHtml(statusTexte)}</p>
                 <p><strong>Première :</strong> ${escapeHtml(premieredTexte)}</p>
@@ -215,6 +218,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 <p><strong>Résumé :</strong> ${escapeHtml(summaryTexte)}</p>
 
                 <div class="card-actions">
+
                     <select class="ressenti-select" id="ressenti-${serie.id}">
                         <option value="vu_aime" ${ressentiSelectionne === "vu_aime" ? "selected" : ""}>Vu & Aimé</option>
                         <option value="vu_neutre" ${ressentiSelectionne === "vu_neutre" ? "selected" : ""}>Vu & Neutre</option>
@@ -548,4 +552,25 @@ document.addEventListener("DOMContentLoaded", () => {
     // Lancement initial
     // =========================================================
     chargerAvis();
+
+    // À mettre vers la fin de scriptAvis.js
+    window.TrailerYoutube = async function(nomSerie) {
+        console.log("Recherche du trailer pour : " + nomSerie);
+        const nomEncode = encodeURIComponent(nomSerie);
+
+        try {
+            const response = await fetch(`/api/get_trailer?nom=${nomEncode}`);
+            if (!response.ok) throw new Error("Erreur serveur");
+
+            const data = await response.json();
+            if (data.video_url) {
+                window.open(data.video_url, '_blank');
+            }
+        } catch (error) {
+            console.error("Erreur trailer :", error);
+            const backupUrl = `https://www.youtube.com/results?search_query=${nomEncode}+official+trailer`;
+            window.open(backupUrl, '_blank');
+        }
+    };
+
 });
