@@ -3,7 +3,7 @@ from models import Avis
 from routes.auth import login_required
 from gemini import generer_recommandations
 
-# Blueprint Flask dédié aux recommandations
+# Blueprint Flask pour recommandations
 apiRecommendation = Blueprint("apiRecommendation", __name__)
 
 
@@ -20,13 +20,13 @@ def get_recommandations():
     4. renvoie les recommandations en JSON
     """
 
-    # Texte libre saisi par l'utilisateur dans l'input
+    # texte libre pour que l'user puisse écdrire
     texte_libre = request.args.get("texte", "").strip()
 
-    # On récupère tous les avis de l'utilisateur connecté
+    # récup les avis des users
     avis_db = Avis.query.filter_by(user_id=g.user.id).all()
 
-    # Si l'utilisateur n'a aucun avis et aucun texte, on renvoie un message
+    # renvoie un message si user n'a aps laissé de message et mis d'avis
     if len(avis_db) == 0 and texte_libre == "":
         return {
             "ok": True,
@@ -34,7 +34,7 @@ def get_recommandations():
             "message": "Ajoute des avis ou écris une préférence pour obtenir des recommandations."
         }, 200
 
-    # On prépare une version simple des avis pour Gemini
+    
     avis_utilisateur = []
 
     for avis in avis_db:

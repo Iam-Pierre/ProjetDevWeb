@@ -1,6 +1,5 @@
-# 🎬 Film Recommender AI
 
-Application web de recommandation de films par intelligence artificielle.
+Application web de recommandation de films 
 
 ## Technologies
 - Python / Flask
