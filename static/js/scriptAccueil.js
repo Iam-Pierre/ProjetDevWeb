@@ -178,14 +178,11 @@ document.addEventListener("DOMContentLoaded", () => {
 
     window.TrailerYoutube = async function(nomSerie) {
         const nomEncode = encodeURIComponent(nomSerie);
-
         try {
             const data = await fetchJson(`/api/get_trailer?nom=${nomEncode}`);
-            if (data.video_url) {
-                window.open(data.video_url, "_blank");
-            }
-        } catch {
-            window.open(`https://www.youtube.com/results?search_query=${nomEncode}+official+trailer`, "_blank");
+            if (data.video_url) window.open(data.video_url, '_blank');
+        } catch (e) {
+            window.open(`https://www.youtube.com/results?search_query=${nomEncode}+official+trailer`, '_blank');
         }
     };
 

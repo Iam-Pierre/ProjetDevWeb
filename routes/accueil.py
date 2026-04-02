@@ -163,9 +163,6 @@ def api_search_series():
 @apiAccueil.route("/api/get_trailer", methods=["GET"])
 @login_required
 def get_trailer():
-    """
-    Cherche une bande-annonce YouTube pour une série donnée.
-    """
     nom_serie = os(request.args.get("nom") or "").strip()
     api_key = os.getenv("YOUTUBE_API_KEY")
 
