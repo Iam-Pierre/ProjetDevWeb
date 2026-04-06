@@ -12,7 +12,7 @@ document.getElementById("recommandations-btn").addEventListener("click", () => {
 
 document.getElementById("logout-btn").addEventListener("click", async (e) => {
     
-    const response = await fetch('/api/logout', {
+    const response = await fetch('/api/auth/logout', {
         method: 'POST',
         });
 
